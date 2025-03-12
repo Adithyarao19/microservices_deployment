@@ -1,1 +1,25 @@
-
+name: CI/CD Pipeline
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build Docker image
+        run: docker build -t <service-name>:latest .
+      - name: Run tests
+        run: npm test
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to AWS ECR
+        run: aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <aws-account-id>.dkr.ecr.<region>.amazonaws.com
+      - name: Push to ECR
+        run: |
+          docker tag <service-name>:latest <aws-ecr-repo-url>:latest
+          docker push <aws-ecr-repo-url>:latest
